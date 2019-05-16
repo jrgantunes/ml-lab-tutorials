@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 """
-Basic functionality of scikit-learn and imbalanced-learn.
+Compares performance of estimators and pipelines.
 """
 
 import pandas as pd
