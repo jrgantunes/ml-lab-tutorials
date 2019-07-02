@@ -195,7 +195,7 @@ def optimize(prices, symbols, target_return=0.1):
     #Between 0 and 1
     bounds = ((0.0, 1.0),) * len(symbols)
     weights = minimize(get_portfolio_risk, init_guess,
-                       args=(normalized_prices,), method='SLSQP',
+                       args=(normalized_prices,), method='SLSQP', # Sequential LEast Squares Programming
                        options={'disp': False},
                        constraints=({'type': 'eq', 'fun': lambda inputs: 1.0 - np.sum(inputs)},
                                     {'type': 'eq', 'args': (normalized_prices,),
