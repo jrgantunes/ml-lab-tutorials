@@ -154,10 +154,11 @@ return_all = np.array([])
 
 # for demo purpose, plot 3000 random portoflio
 np.random.seed(0)
-normalized_prices = prices / prices.ix[0, :]
+normalized_prices = prices / prices.iloc[0, :]
 
 #%%
 
+# 3000 options of weights
 for _ in range(0, 3000):
     weights = random_weights(len(symbols))
     portfolio_val = (normalized_prices * weights).sum(axis=1)
@@ -172,6 +173,7 @@ ax.scatter(x=risk_all, y=return_all, alpha=0.5)
 ax.set(title='Return and Risk', xlabel='Risk', ylabel='Return')
 
 
+
 for i, symbol in enumerate(symbols):
     ax.annotate(symbol, (risk_v[i], return_v[i]))
 ax.scatter(x=risk_v, y=return_v, alpha=0.5, color='red')
@@ -181,7 +183,52 @@ plt.show()
 
 #%%
 
+# Efficient Frontier
 
+# Optimize the weights
+
+# optimizer
+def optimize(prices, symbols, target_return=0.1):
+    normalized_prices = prices / prices.ix[0, :]
+    # all Symbols have the same opportunity
+    init_guess = np.ones(len(symbols)) * (1.0 / len(symbols))
+    #Between 0 and 1
+    bounds = ((0.0, 1.0),) * len(symbols)
+    weights = minimize(get_portfolio_risk, init_guess,
+                       args=(normalized_prices,), method='SLSQP',
+                       options={'disp': False},
+                       constraints=({'type': 'eq', 'fun': lambda inputs: 1.0 - np.sum(inputs)},
+                                    {'type': 'eq', 'args': (normalized_prices,),
+                                     'fun': lambda inputs, normalized_prices:
+                                     target_return - get_portfolio_return(weights=inputs,
+                                                                          normalized_prices=normalized_prices)}),
+                       bounds=bounds)
+    return weights.x
+
+
+optimal_risk_all = np.array([])
+optimal_return_all = np.array([])
+
+
+for target_return in np.arange(0.005, .0402, .0005):
+    opt_w = optimize(prices=prices, symbols=symbols, target_return=target_return)
+    optimal_risk_all = np.append(optimal_risk_all, get_portfolio_risk(opt_w, normalized_prices))
+    optimal_return_all = np.append(optimal_return_all, get_portfolio_return(opt_w, normalized_prices))
+# plotting
+fig, ax = plt.subplots()
+# random portfolio risk return
+ax.scatter(x=risk_all, y=return_all, alpha=0.5)
+# optimal portfolio risk return
+for i, symbol in enumerate(symbols):
+    ax.annotate(symbol, (risk_v[i], return_v[i]))
+ax.plot(optimal_risk_all, optimal_return_all, '-', color='green')
+# symbol risk return
+for i, symbol in enumerate(symbols):
+    ax.annotate(symbol, (risk_v[i], return_v[i]))
+ax.scatter(x=risk_v, y=return_v, color='red')
+ax.set(title='Efficient Frontier', xlabel='Risk', ylabel='Return')
+ax.grid()
+plt.savefig('return_risk_efficient_frontier.png', bbox_inches='tight')
 
 
 
